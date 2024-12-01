@@ -16,17 +16,17 @@ jobs:
       - name: Set variables
         run: |
           echo "update_version=$(date -d '+8 hours' +%Y-%m-%d)" >> ${GITHUB_ENV}
-          echo "domains_download_url=https://raw.githubusercontent.com/DustinWin/domain-list-custom/domains" >> ${GITHUB_ENV}
-          echo "ips_download_url=https://github.com/DustinWin/geoip/releases/download/ips" >> ${GITHUB_ENV}
+          echo "domains_download_url=https://raw.githubusercontent.com/unmoe/domain-list-custom/domains" >> ${GITHUB_ENV}
+          echo "ips_download_url=https://github.com/unmoe/geoip/releases/download/ips" >> ${GITHUB_ENV}
         shell: bash
 
       - name: Clone Repository
         uses: actions/checkout@master
 
-      - name: Checkout DustinWin/domain-list-custom
+      - name: Checkout unmoe/domain-list-custom
         uses: actions/checkout@v4
         with:
-          repository: DustinWin/domain-list-custom
+          repository: unmoe/domain-list-custom
           path: custom
 
       - name: Checkout v2fly/domain-list-community
@@ -83,21 +83,21 @@ jobs:
         run: |
           mkdir -p ./clash/ ./sing-box/
           # Download Clash geoip files (.mmdb)
-          clash_mmdb=($(curl -sSL https://api.github.com/repos/DustinWin/geoip/releases | grep '"browser_download_url"' | grep '.mmdb' | awk -F'"' '{print $4}'))
+          clash_mmdb=($(curl -sSL https://api.github.com/repos/unmoe/geoip/releases | grep '"browser_download_url"' | grep '.mmdb' | awk -F'"' '{print $4}'))
           count_clash_mmdb=${#clash_mmdb[@]}
           for ((i = 0; i < count_clash_mmdb; i++)); do
             wget -P ./clash/ "${clash_mmdb[i]}"
           done
 
           # Download Clash other geoip files (except .mmdb)
-          clash_others=($(curl -sSL https://api.github.com/repos/DustinWin/geoip/releases | grep '"browser_download_url"' | grep '/clash/' | grep -v '.mmdb' | awk -F'"' '{print $4}'))
+          clash_others=($(curl -sSL https://api.github.com/repos/unmoe/geoip/releases | grep '"browser_download_url"' | grep '/clash/' | grep -v '.mmdb' | awk -F'"' '{print $4}'))
           count_clash_others=${#clash_others[@]}
           for ((i = 0; i < count_clash_others; i++)); do
             wget -P ./community/ "${clash_others[i]}"
           done
 
           # Download sing-box all geoip files
-          singbox_all=($(curl -sSL https://api.github.com/repos/DustinWin/geoip/releases | grep '"browser_download_url"' | grep '/sing-box/' | awk -F'"' '{print $4}'))
+          singbox_all=($(curl -sSL https://api.github.com/repos/unmoe/geoip/releases | grep '"browser_download_url"' | grep '/sing-box/' | awk -F'"' '{print $4}'))
           count_singbox_all=${#singbox_all[@]}
           for ((i = 0; i < count_singbox_all; i++)); do
             wget -P ./community/ "${singbox_all[i]}"
@@ -186,8 +186,9 @@ jobs:
 
       - name: Download and unzip `mihomo` core
         run: |
-          wget https://github.com/DustinWin/clash_singbox-tools/releases/download/mihomo/mihomo-alpha-linux-amd64.tar.gz -O - | tar -zxf - -C ./tools/
-          mv -f ./tools/CrashCore ./tools/mihomo
+          mihomo_version=$(curl -s "https://api.github.com/repos/MetaCubeX/mihomo/releases/latest" | grep -o '"tag_name": "[^"]*' | grep -o '[^"]*$' )
+          wget https://github.com/MetaCubeX/mihomo/releases/download/${mihomo_version}/mihomo-linux-amd64-${mihomo_version}.gz -O ./tools/mihomo.gz
+          gunzip -c ./tools/mihomo.gz > ./tools/mihomo
 
       - name: Generate `clash` rule-set (mrs)
         run: |
@@ -218,8 +219,9 @@ jobs:
 
       - name: Download and unzip `sing-box` core
         run: |
-          wget https://github.com/DustinWin/clash_singbox-tools/releases/download/sing-box/sing-box-release-linux-amd64.tar.gz -O - | tar -zxf - -C ./tools/
-          mv -f ./tools/CrashCore ./tools/sing-box
+          singbox_version=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases/latest" | grep -o '"tag_name": "[^"]*' | grep -o '[^"]*$' | sed 's/v//g' )
+          wget https://github.com/SagerNet/sing-box/releases/download/v${singbox_version}/sing-box-${singbox_version}-linux-amd64.tar.gz -O - | tar -zxf - -C ./tools
+          mv -f ./tools/sing-box-${singbox_version}-linux-amd64/sing-box ./tools/sing-box
 
       - name: Generate `sing-box` rule_set
         run: |
